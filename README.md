@@ -30,7 +30,7 @@ Hello, world !
 - [x] C
 - [x] Objective-C
 - [x] C++
-- [ ] C#
+- [x] C#
 - [x] D
 - [ ] E
 - [x] Go

@@ -12,7 +12,7 @@ CATEGORY="$2"
 ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 TARGET="$ROOT/hello/$CATEGORY/$LANGUAGE"
 
-if [[ ! "$LANGUAGE" =~ ^[A-Za-z0-9_+-]+$ ]]; then
+if [[ ! "$LANGUAGE" =~ ^[A-Za-z0-9_+#-]+$ ]]; then
     echo "ERROR: Invalid language name: $LANGUAGE" >&2
     exit 1
 fi
