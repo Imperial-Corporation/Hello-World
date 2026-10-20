@@ -1,56 +1,66 @@
 @echo off
 setlocal EnableExtensions
 
-echo Checking Nim installation...
+set "LANG_DIR=%~dp0"
+for %%I in ("%LANG_DIR%..\..\..") do set "ROOT=%%~fI"
+
+if not defined DIST_DIR (
+    echo ERROR: DIST_DIR must be set by scripts\compile.bat
+    exit /b 1
+)
+
+rem Locate Nim in the default installation directory.
+set "NIM_EXE="
 
 where nim >nul 2>&1
 if not errorlevel 1 (
-    nim --version
-    exit /b 0
+    for /f "delims=" %%F in ('where nim') do (
+        set "NIM_EXE=%%F"
+        goto :nim_found
+    )
 )
 
-set "NIM_VERSION=2.2.12"
-set "NIM_DIR=%LOCALAPPDATA%\Nim"
-set "NIM_ZIP=%TEMP%\nim-windows.zip"
-set "NIM_URL=https://nim-lang.org/download/nim-2.2.12_x64.zip"
-
-echo Downloading Nim %NIM_VERSION%...
-
-powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-    "$ErrorActionPreference = 'Stop';" ^
-    "$ProgressPreference = 'SilentlyContinue';" ^
-    "Invoke-WebRequest -Uri '%NIM_URL%' -OutFile '%NIM_ZIP%';" ^
-    "if (Test-Path '%NIM_DIR%') { Remove-Item '%NIM_DIR%' -Recurse -Force };" ^
-    "New-Item -ItemType Directory -Path '%NIM_DIR%' -Force | Out-Null;" ^
-    "Expand-Archive -LiteralPath '%NIM_ZIP%' -DestinationPath '%NIM_DIR%' -Force"
-
-if errorlevel 1 (
-    echo ERROR: Failed to download or extract Nim.
-    exit /b 1
+if exist "%LOCALAPPDATA%\Nim" (
+    for /f "delims=" %%F in ('where /r "%LOCALAPPDATA%\Nim" nim.exe 2^>nul') do (
+        set "NIM_EXE=%%F"
+        goto :nim_found
+    )
 )
 
-del "%NIM_ZIP%" >nul 2>&1
-
-rem Find the actual compiler path inside the extracted archive.
-for /f "delims=" %%F in ('where /r "%NIM_DIR%" nim.exe 2^>nul') do (
-    set "NIM_EXE=%%F"
-    goto :nim_found
-)
-
-echo ERROR: nim.exe was not found after extraction.
-dir "%NIM_DIR%" /s /b
+echo ERROR: Nim is not installed.
 exit /b 1
 
 :nim_found
-for %%F in ("%NIM_EXE%") do set "NIM_BIN=%%~dpF"
-set "PATH=%NIM_BIN%;%PATH%"
+echo Using Nim: %NIM_EXE%
 
-echo Found Nim: %NIM_EXE%
-"%NIM_EXE%" --version
-if errorlevel 1 (
-    echo ERROR: Nim failed to start.
+rem Determine the target architecture.
+for /f "tokens=2 delims==" %%A in ('call "%ROOT%\scripts\arch.bat" ^| findstr /b "ARCH="') do set "ARCH=%%A"
+
+if not defined ARCH (
+    echo ERROR: Unable to determine target architecture.
     exit /b 1
 )
 
-echo Nim installation completed successfully.
+set "SRC=%LANG_DIR%%ARCH%\src\hello.nim"
+set "OUTPUT=%DIST_DIR%\hello.exe"
+
+if not exist "%SRC%" (
+    echo ERROR: Missing Nim source: %SRC%
+    exit /b 1
+)
+
+if not exist "%DIST_DIR%" mkdir "%DIST_DIR%"
+
+"%NIM_EXE%" c --hints:off --warnings:off --opt:speed --out:"%OUTPUT%" "%SRC%"
+if errorlevel 1 (
+    echo ERROR: Nim compilation failed.
+    exit /b 1
+)
+
+if not exist "%OUTPUT%" (
+    echo ERROR: Nim did not produce the expected executable.
+    exit /b 1
+)
+
+echo Nim build complete: %OUTPUT%
 exit /b 0
