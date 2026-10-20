@@ -51,6 +51,17 @@ echo "Target: $TARGET"
 
 count=0
 
+is_intermediate() {
+    case "${1,,}" in
+        *.o|*.obj|*.pdb|*.ilk|*.exp|*.lib|*.map|*.tmp|*.class)
+            return 0
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
 for lang_dir in "$ROOT"/hello/*/*; do
     [[ -d "$lang_dir" ]] || continue
 
@@ -76,23 +87,30 @@ for lang_dir in "$ROOT"/hello/*/*; do
     echo "Building $category/$language"
 
     pushd "$lang_dir" >/dev/null
-
     if [[ -f install.sh ]]; then
         bash ./install.sh
     fi
-
     bash ./build.sh
-
     popd >/dev/null
 
-    # Each build script must place exactly one final artifact
-    # directly in DIST_DIR. Auxiliary files belong in subdirectories.
-    mapfile -d '' -t outputs < <(
+    mapfile -d '' -t all_files < <(
         find "$BUILD_DIR" -mindepth 1 -maxdepth 1 -type f -print0
     )
 
+    outputs=()
+    for file in "${all_files[@]}"; do
+        if ! is_intermediate "$(basename "$file")"; then
+            outputs+=("$file")
+        fi
+    done
+
+    # If every file has an intermediate extension, allow a sole file.
+    if [[ "${#outputs[@]}" -eq 0 && "${#all_files[@]}" -eq 1 ]]; then
+        outputs=("${all_files[0]}")
+    fi
+
     if [[ "${#outputs[@]}" -ne 1 ]]; then
-        echo "ERROR: Expected exactly one artifact for $language; found ${#outputs[@]}." >&2
+        echo "ERROR: Expected exactly one final artifact for $language; found ${#outputs[@]}." >&2
         find "$BUILD_DIR" -maxdepth 2 -type f -print >&2
         exit 1
     fi
@@ -101,16 +119,13 @@ for lang_dir in "$ROOT"/hello/*/*; do
     filename="$(basename "$artifact")"
     extension=""
 
-    # Preserve the artifact's final extension, if it has one.
     if [[ "$filename" == *.* && "$filename" != .* ]]; then
         extension=".${filename##*.}"
     fi
 
     output_name="hello-${language}-${ARCH}-${PLATFORM}${extension}"
-
     cp -- "$artifact" "$DIST/$output_name"
 
-    # Extensionless artifacts are treated as native executables.
     if [[ -z "$extension" ]]; then
         chmod +x "$DIST/$output_name"
     fi

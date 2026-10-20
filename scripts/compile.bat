@@ -31,10 +31,8 @@ set "WORK=%ROOT%\.build-tmp"
 
 if exist "%DIST%" rmdir /s /q "%DIST%"
 if exist "%WORK%" rmdir /s /q "%WORK%"
-mkdir "%DIST%"
-if errorlevel 1 exit /b 1
-mkdir "%WORK%"
-if errorlevel 1 exit /b 1
+mkdir "%DIST%" || exit /b 1
+mkdir "%WORK%" || exit /b 1
 
 echo Hello-World compiler
 echo OS: Windows
@@ -79,25 +77,41 @@ for /d %%C in ("%ROOT%\hello\*") do (
 
             popd
 
-            rem Count every regular file directly inside BUILD_DIR.
-            rem Directories such as Java's classes folder are ignored.
+            set /a ALL_COUNT=0
             set /a ARTIFACT_COUNT=0
             set "ARTIFACT="
+            set "FALLBACK="
 
             for %%F in ("!BUILD_DIR!\*") do (
                 if exist "%%~fF" if not exist "%%~fF\NUL" (
-                    set /a ARTIFACT_COUNT+=1
-                    set "ARTIFACT=%%~fF"
-                    set "ARTIFACT_NAME=%%~nxF"
-                    set "ARTIFACT_EXT=%%~xF"
+                    set /a ALL_COUNT+=1
+                    set "FALLBACK=%%~fF"
+                    set "IS_INTERMEDIATE=0"
+
+                    for %%E in (.o .obj .pdb .ilk .exp .lib .map .tmp .class) do (
+                        if /I "%%~xF"=="%%E" set "IS_INTERMEDIATE=1"
+                    )
+
+                    if "!IS_INTERMEDIATE!"=="0" (
+                        set /a ARTIFACT_COUNT+=1
+                        set "ARTIFACT=%%~fF"
+                    )
                 )
             )
 
+            if "!ARTIFACT_COUNT!"=="0" if "!ALL_COUNT!"=="1" (
+                set "ARTIFACT=!FALLBACK!"
+                set /a ARTIFACT_COUNT=1
+            )
+
             if not "!ARTIFACT_COUNT!"=="1" (
-                echo ERROR: Expected exactly one artifact for %%~nxL, found !ARTIFACT_COUNT!.
+                echo ERROR: Expected exactly one final artifact for %%~nxL, found !ARTIFACT_COUNT!.
                 dir /s /b "!BUILD_DIR!"
                 exit /b 1
             )
+
+            set "ARTIFACT_EXT="
+            for %%F in ("!ARTIFACT!") do set "ARTIFACT_EXT=%%~xF"
 
             set "OUTPUT_NAME=hello-%%~nxL-%ARCH%-Windows!ARTIFACT_EXT!"
 
