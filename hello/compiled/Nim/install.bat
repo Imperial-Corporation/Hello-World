@@ -1,70 +1,55 @@
 @echo off
 setlocal EnableExtensions
+setlocal EnableExtensions EnableDelayedExpansion
 
-set "LANG_DIR=%~dp0"
+set "NIM_VERSION=2.2.12"
 set "NIM_ROOT=%LOCALAPPDATA%\Nim"
-set "NIM_EXE="
+set "NIM_URL=https://nim-lang.org/download/nim-2.2.12_x64.zip"
+set "NIM_ARCHIVE=%TEMP%\nim-%NIM_VERSION%-x64.zip"
 
-echo Searching for Nim...
+echo Checking Nim installation...
 
-rem Check PATH first.
-where nim.exe >nul 2>&1
-if not errorlevel 1 (
-    for /f "delims=" %%F in ('where nim.exe') do (
-        set "NIM_EXE=%%F"
-        goto :found
-    )
-)
-
-rem Search the directory used by install.bat.
+rem Reuse an existing installation if available.
 if exist "%NIM_ROOT%" (
     for /f "delims=" %%F in ('where /r "%NIM_ROOT%" nim.exe 2^>nul') do (
-        set "NIM_EXE=%%F"
-        goto :found
+        echo Found Nim: %%F
+        "%%F" --version
+        exit /b !errorlevel!
     )
 )
 
-echo ERROR: Nim executable not found.
-echo Searched PATH and "%NIM_ROOT%"
+echo Downloading Nim %NIM_VERSION%...
+
+if not exist "%NIM_ROOT%" mkdir "%NIM_ROOT%"
+if errorlevel 1 exit /b 1
+
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+    "$ErrorActionPreference = 'Stop'; Invoke-WebRequest -Uri '%NIM_URL%' -OutFile '%NIM_ARCHIVE%'; Expand-Archive -LiteralPath '%NIM_ARCHIVE%' -DestinationPath '%NIM_ROOT%' -Force"
+
+if errorlevel 1 (
+    echo ERROR: Failed to download or extract Nim.
+    exit /b 1
+)
+
+del /q "%NIM_ARCHIVE%" 2>nul
+
+set "NIM_EXE="
+for /f "delims=" %%F in ('where /r "%NIM_ROOT%" nim.exe 2^>nul') do (
+    set "NIM_EXE=%%F"
+    goto :verify
+)
+
+echo ERROR: nim.exe was not found after extraction.
+echo Installation directory: "%NIM_ROOT%"
 exit /b 1
 
-:found
+:verify
 echo Found Nim: "%NIM_EXE%"
-
-if not defined DIST_DIR (
-    echo ERROR: DIST_DIR is not set.
-    exit /b 1
-)
-
-for %%I in ("%LANG_DIR%..\..\..") do set "ROOT=%%~fI"
-
-for /f "tokens=2 delims==" %%A in ('call "%ROOT%\scripts\arch.bat" ^| findstr /b "ARCH="') do set "ARCH=%%A"
-
-if not defined ARCH (
-    echo ERROR: Could not determine architecture.
-    exit /b 1
-)
-
-set "SRC=%LANG_DIR%%ARCH%\src\hello.nim"
-set "OUTPUT=%DIST_DIR%\hello.exe"
-
-if not exist "%SRC%" (
-    echo ERROR: Source file not found: "%SRC%"
-    exit /b 1
-)
-
-if not exist "%DIST_DIR%" mkdir "%DIST_DIR%"
-
-"%NIM_EXE%" c --hints:off --warnings:off --opt:speed --out:"%OUTPUT%" "%SRC%"
+"%NIM_EXE%" --version
 if errorlevel 1 (
-    echo ERROR: Nim compilation failed.
+    echo ERROR: Nim failed to start.
     exit /b 1
 )
 
-if not exist "%OUTPUT%" (
-    echo ERROR: Output executable was not created.
-    exit /b 1
-)
-
-echo Nim build complete: "%OUTPUT%"
+echo Nim installation completed successfully.
 exit /b 0
