@@ -5,7 +5,35 @@ echo Updating Windows...
 
 where winget >nul 2>&1
 if errorlevel 1 (
-    echo ERROR: winget is not installed.
+    echo winget is not installed. Installing App Installer...
+
+    where curl >nul 2>&1
+    if errorlevel 1 (
+        echo ERROR: curl is not installed. Cannot download App Installer.
+        exit /b 1
+    )
+
+    set "WINGET_URL=https://aka.ms/getwinget"
+    set "WINGET_PACKAGE=%TEMP%\Microsoft.DesktopAppInstaller.msixbundle"
+
+    curl -fSL "%WINGET_URL%" -o "%TEMP%\Microsoft.DesktopAppInstaller.msixbundle"
+    if errorlevel 1 (
+        echo ERROR: Failed to download App Installer.
+        exit /b 1
+    )
+
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "Add-AppxPackage -Path '%TEMP%\Microsoft.DesktopAppInstaller.msixbundle'"
+    if errorlevel 1 (
+        echo ERROR: Failed to install App Installer.
+        exit /b 1
+    )
+
+    set "PATH=%PATH%;%LOCALAPPDATA%\Microsoft\WindowsApps"
+)
+
+where winget >nul 2>&1
+if errorlevel 1 (
+    echo ERROR: winget is still unavailable after installation.
     exit /b 1
 )
 
