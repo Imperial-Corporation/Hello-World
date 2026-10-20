@@ -21,8 +21,8 @@ if [[ -z "$ARCH" || -z "$TARGET" || -z "$OS_NAME" ]]; then
 fi
 
 case "${OS_NAME,,}" in
-    *linux*) PLATFORM="Linux"; EXT="" ;;
-    *windows*|*mingw*|*msys*) PLATFORM="Windows"; EXT=".exe" ;;
+    *linux*) PLATFORM="Linux" ;;
+    *windows*|*mingw*|*msys*) PLATFORM="Windows" ;;
     *)
         echo "ERROR: Unsupported OS: $OS_NAME" >&2
         exit 1
@@ -70,6 +70,7 @@ for lang_dir in "$ROOT"/hello/*/*; do
     BUILD_DIR="$WORK/$category/$language"
     mkdir -p "$BUILD_DIR"
     export DIST_DIR="$BUILD_DIR"
+    export ARCH
 
     echo
     echo "Building $category/$language"
@@ -84,30 +85,35 @@ for lang_dir in "$ROOT"/hello/*/*; do
 
     popd >/dev/null
 
-    # Only collect native executable files, not object files or sources.
-    mapfile -t outputs < <(
-        find "$BUILD_DIR" -maxdepth 1 -type f -executable \
-            ! -name '*.o' \
-            ! -name '*.obj' \
-            ! -name '*.sh' \
-            ! -name '*.py' \
-            ! -name '*.rs' \
-            ! -name '*.c' \
-            ! -name '*.d' \
-            ! -name '*.sha256' \
-            ! -name '*.spec' \
-            -print
+    # Each build script must place exactly one final artifact
+    # directly in DIST_DIR. Auxiliary files belong in subdirectories.
+    mapfile -d '' -t outputs < <(
+        find "$BUILD_DIR" -mindepth 1 -maxdepth 1 -type f -print0
     )
 
     if [[ "${#outputs[@]}" -ne 1 ]]; then
-        echo "ERROR: Expected exactly one executable for $language; found ${#outputs[@]}." >&2
+        echo "ERROR: Expected exactly one artifact for $language; found ${#outputs[@]}." >&2
         find "$BUILD_DIR" -maxdepth 2 -type f -print >&2
         exit 1
     fi
 
-    output_name="hello-${language}-${ARCH}-${PLATFORM}${EXT}"
-    cp -- "${outputs[0]}" "$DIST/$output_name"
-    chmod +x "$DIST/$output_name"
+    artifact="${outputs[0]}"
+    filename="$(basename "$artifact")"
+    extension=""
+
+    # Preserve the artifact's final extension, if it has one.
+    if [[ "$filename" == *.* && "$filename" != .* ]]; then
+        extension=".${filename##*.}"
+    fi
+
+    output_name="hello-${language}-${ARCH}-${PLATFORM}${extension}"
+
+    cp -- "$artifact" "$DIST/$output_name"
+
+    # Extensionless artifacts are treated as native executables.
+    if [[ -z "$extension" ]]; then
+        chmod +x "$DIST/$output_name"
+    fi
 
     echo "Created: $output_name"
     count=$((count + 1))
@@ -121,5 +127,5 @@ fi
 rm -rf "$WORK"
 
 echo
-echo "Compilation complete: $count executable(s)."
+echo "Compilation complete: $count artifact(s)."
 echo "Release files: $DIST/"

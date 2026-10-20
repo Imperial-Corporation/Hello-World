@@ -21,13 +21,20 @@ if not defined ARCH (
     exit /b 1
 )
 
+if /I not "%ARCH%"=="x86_64" if /I not "%ARCH%"=="arm64" (
+    echo ERROR: Unsupported architecture: %ARCH%
+    exit /b 1
+)
+
 set "DIST=%ROOT%\dist"
 set "WORK=%ROOT%\.build-tmp"
 
 if exist "%DIST%" rmdir /s /q "%DIST%"
 if exist "%WORK%" rmdir /s /q "%WORK%"
 mkdir "%DIST%"
+if errorlevel 1 exit /b 1
 mkdir "%WORK%"
+if errorlevel 1 exit /b 1
 
 echo Hello-World compiler
 echo OS: Windows
@@ -38,7 +45,7 @@ set /a COUNT=0
 
 for /d %%C in ("%ROOT%\hello\*") do (
     for /d %%L in ("%%C\*") do (
-        if exist "%%L\%ARCH%" (
+        if exist "%%L\%ARCH%\" (
             if not exist "%%L\build.bat" (
                 echo ERROR: Missing build.bat in %%L
                 exit /b 1
@@ -46,6 +53,7 @@ for /d %%C in ("%ROOT%\hello\*") do (
 
             set "BUILD_DIR=%WORK%\%%~nxC\%%~nxL"
             if not exist "!BUILD_DIR!" mkdir "!BUILD_DIR!"
+            if errorlevel 1 exit /b 1
             set "DIST_DIR=!BUILD_DIR!"
 
             echo.
@@ -71,24 +79,35 @@ for /d %%C in ("%ROOT%\hello\*") do (
 
             popd
 
-            set /a EXE_COUNT=0
-            for %%F in ("!BUILD_DIR!\*.exe") do (
-                if exist "%%~fF" (
-                    set /a EXE_COUNT+=1
-                    set "EXE_FILE=%%~fF"
+            rem Count every regular file directly inside BUILD_DIR.
+            rem Directories such as Java's classes folder are ignored.
+            set /a ARTIFACT_COUNT=0
+            set "ARTIFACT="
+
+            for %%F in ("!BUILD_DIR!\*") do (
+                if exist "%%~fF" if not exist "%%~fF\NUL" (
+                    set /a ARTIFACT_COUNT+=1
+                    set "ARTIFACT=%%~fF"
+                    set "ARTIFACT_NAME=%%~nxF"
+                    set "ARTIFACT_EXT=%%~xF"
                 )
             )
 
-            if not "!EXE_COUNT!"=="1" (
-                echo ERROR: Expected exactly one .exe for %%~nxL, found !EXE_COUNT!.
+            if not "!ARTIFACT_COUNT!"=="1" (
+                echo ERROR: Expected exactly one artifact for %%~nxL, found !ARTIFACT_COUNT!.
                 dir /s /b "!BUILD_DIR!"
                 exit /b 1
             )
 
-            copy /y "!EXE_FILE!" "%DIST%\hello-%%~nxL-%ARCH%-Windows.exe" >nul
-            if errorlevel 1 exit /b 1
+            set "OUTPUT_NAME=hello-%%~nxL-%ARCH%-Windows!ARTIFACT_EXT!"
 
-            echo Created: hello-%%~nxL-%ARCH%-Windows.exe
+            copy /y "!ARTIFACT!" "%DIST%\!OUTPUT_NAME!" >nul
+            if errorlevel 1 (
+                echo ERROR: Failed to copy artifact for %%~nxL
+                exit /b 1
+            )
+
+            echo Created: !OUTPUT_NAME!
             set /a COUNT+=1
         ) else (
             echo SKIP: %%~nxC/%%~nxL - architecture not supported
@@ -104,6 +123,6 @@ if "%COUNT%"=="0" (
 rmdir /s /q "%WORK%"
 
 echo.
-echo Compilation complete: %COUNT% executable(s).
+echo Compilation complete: %COUNT% artifact(s).
 echo Release files: %DIST%
 exit /b 0
