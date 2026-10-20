@@ -2,42 +2,46 @@
 setlocal EnableExtensions
 
 set "LANG_DIR=%~dp0"
-for %%I in ("%LANG_DIR%..\..\..") do set "ROOT=%%~fI"
+set "NIM_ROOT=%LOCALAPPDATA%\Nim"
+set "NIM_EXE="
+
+echo Searching for Nim...
+
+rem Check PATH first.
+where nim.exe >nul 2>&1
+if not errorlevel 1 (
+    for /f "delims=" %%F in ('where nim.exe') do (
+        set "NIM_EXE=%%F"
+        goto :found
+    )
+)
+
+rem Search the directory used by install.bat.
+if exist "%NIM_ROOT%" (
+    for /f "delims=" %%F in ('where /r "%NIM_ROOT%" nim.exe 2^>nul') do (
+        set "NIM_EXE=%%F"
+        goto :found
+    )
+)
+
+echo ERROR: Nim executable not found.
+echo Searched PATH and "%NIM_ROOT%"
+exit /b 1
+
+:found
+echo Found Nim: "%NIM_EXE%"
 
 if not defined DIST_DIR (
-    echo ERROR: DIST_DIR must be set by scripts\compile.bat
+    echo ERROR: DIST_DIR is not set.
     exit /b 1
 )
 
-rem Locate Nim in the default installation directory.
-set "NIM_EXE="
+for %%I in ("%LANG_DIR%..\..\..") do set "ROOT=%%~fI"
 
-where nim >nul 2>&1
-if not errorlevel 1 (
-    for /f "delims=" %%F in ('where nim') do (
-        set "NIM_EXE=%%F"
-        goto :nim_found
-    )
-)
-
-if exist "%LOCALAPPDATA%\Nim" (
-    for /f "delims=" %%F in ('where /r "%LOCALAPPDATA%\Nim" nim.exe 2^>nul') do (
-        set "NIM_EXE=%%F"
-        goto :nim_found
-    )
-)
-
-echo ERROR: Nim is not installed.
-exit /b 1
-
-:nim_found
-echo Using Nim: %NIM_EXE%
-
-rem Determine the target architecture.
 for /f "tokens=2 delims==" %%A in ('call "%ROOT%\scripts\arch.bat" ^| findstr /b "ARCH="') do set "ARCH=%%A"
 
 if not defined ARCH (
-    echo ERROR: Unable to determine target architecture.
+    echo ERROR: Could not determine architecture.
     exit /b 1
 )
 
@@ -45,7 +49,7 @@ set "SRC=%LANG_DIR%%ARCH%\src\hello.nim"
 set "OUTPUT=%DIST_DIR%\hello.exe"
 
 if not exist "%SRC%" (
-    echo ERROR: Missing Nim source: %SRC%
+    echo ERROR: Source file not found: "%SRC%"
     exit /b 1
 )
 
@@ -58,9 +62,9 @@ if errorlevel 1 (
 )
 
 if not exist "%OUTPUT%" (
-    echo ERROR: Nim did not produce the expected executable.
+    echo ERROR: Output executable was not created.
     exit /b 1
 )
 
-echo Nim build complete: %OUTPUT%
+echo Nim build complete: "%OUTPUT%"
 exit /b 0
