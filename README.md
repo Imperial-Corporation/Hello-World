@@ -49,7 +49,7 @@ Hello, world !
 - [ ] C#
 - [x] D
 - [ ] E
-- [ ] Go
+- [x] Go
 - [ ] Nim
 - [ ] Zig
 - [ ] V
