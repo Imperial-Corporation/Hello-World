@@ -15,20 +15,39 @@ while IFS='=' read -r key value; do
     esac
 done < <(bash "$ROOT/scripts/arch.sh")
 
-if [[ -z "$ARCH" || -z "$TARGET" ]]; then
-    echo "ERROR: Could not detect system architecture." >&2
+if [[ -z "$ARCH" || -z "$TARGET" || -z "$OS_NAME" ]]; then
+    echo "ERROR: Could not detect OS/architecture." >&2
     exit 1
 fi
 
-echo "========================================"
-echo " Hello-World compiler"
-echo " OS: $OS_NAME"
-echo " Architecture: $ARCH"
-echo " Target: $TARGET"
-echo "========================================"
+case "${OS_NAME,,}" in
+    *linux*) PLATFORM="Linux"; EXT="" ;;
+    *windows*|*mingw*|*msys*) PLATFORM="Windows"; EXT=".exe" ;;
+    *)
+        echo "ERROR: Unsupported OS: $OS_NAME" >&2
+        exit 1
+        ;;
+esac
 
-rm -rf "$ROOT/dist"
-mkdir -p "$ROOT/dist"
+case "${ARCH,,}" in
+    x86_64|amd64|x64) ARCH="x86_64" ;;
+    arm64|aarch64) ARCH="arm64" ;;
+    *)
+        echo "ERROR: Unsupported architecture: $ARCH" >&2
+        exit 1
+        ;;
+esac
+
+DIST="$ROOT/dist"
+WORK="$ROOT/.build-tmp"
+
+rm -rf "$DIST" "$WORK"
+mkdir -p "$DIST" "$WORK"
+
+echo "Hello-World compiler"
+echo "OS: $PLATFORM"
+echo "Architecture: $ARCH"
+echo "Target: $TARGET"
 
 count=0
 
@@ -38,7 +57,6 @@ for lang_dir in "$ROOT"/hello/*/*; do
     category="$(basename "$(dirname "$lang_dir")")"
     language="$(basename "$lang_dir")"
 
-    # Skip languages without a directory for this architecture.
     if [[ ! -d "$lang_dir/$ARCH" ]]; then
         echo "SKIP: $category/$language ($ARCH not supported)"
         continue
@@ -49,16 +67,14 @@ for lang_dir in "$ROOT"/hello/*/*; do
         exit 1
     fi
 
-    export DIST_DIR="$ROOT/dist/$category/$language/$TARGET"
-    mkdir -p "$DIST_DIR"
+    BUILD_DIR="$WORK/$category/$language"
+    mkdir -p "$BUILD_DIR"
+    export DIST_DIR="$BUILD_DIR"
 
     echo
-    echo "========================================"
-    echo " Building: $category/$language"
-    echo " Output: $DIST_DIR"
-    echo "========================================"
+    echo "Building $category/$language"
 
-    cd "$lang_dir"
+    pushd "$lang_dir" >/dev/null
 
     if [[ -f install.sh ]]; then
         bash ./install.sh
@@ -66,14 +82,44 @@ for lang_dir in "$ROOT"/hello/*/*; do
 
     bash ./build.sh
 
+    popd >/dev/null
+
+    # Only collect native executable files, not object files or sources.
+    mapfile -t outputs < <(
+        find "$BUILD_DIR" -maxdepth 1 -type f -executable \
+            ! -name '*.o' \
+            ! -name '*.obj' \
+            ! -name '*.sh' \
+            ! -name '*.py' \
+            ! -name '*.rs' \
+            ! -name '*.c' \
+            ! -name '*.d' \
+            ! -name '*.sha256' \
+            ! -name '*.spec' \
+            -print
+    )
+
+    if [[ "${#outputs[@]}" -ne 1 ]]; then
+        echo "ERROR: Expected exactly one executable for $language; found ${#outputs[@]}." >&2
+        find "$BUILD_DIR" -maxdepth 2 -type f -print >&2
+        exit 1
+    fi
+
+    output_name="hello-${language}-${ARCH}-${PLATFORM}${EXT}"
+    cp -- "${outputs[0]}" "$DIST/$output_name"
+    chmod +x "$DIST/$output_name"
+
+    echo "Created: $output_name"
     count=$((count + 1))
 done
 
 if [[ "$count" -eq 0 ]]; then
-    echo "ERROR: No compatible language was found for $ARCH." >&2
+    echo "ERROR: No compatible language found for $ARCH." >&2
     exit 1
 fi
 
+rm -rf "$WORK"
+
 echo
-echo "Compilation complete: $count language(s) processed."
-echo "Artifacts: $ROOT/dist/"
+echo "Compilation complete: $count executable(s)."
+echo "Release files: $DIST/"

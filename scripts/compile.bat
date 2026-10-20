@@ -11,19 +11,28 @@ for /f "tokens=1,* delims==" %%A in ('call "%ROOT%\scripts\arch.bat"') do (
     if /I "%%A"=="TARGET" set "TARGET=%%B"
 )
 
+if /I "%ARCH%"=="AMD64" set "ARCH=x86_64"
+if /I "%ARCH%"=="X64" set "ARCH=x86_64"
+if /I "%ARCH%"=="AARCH64" set "ARCH=arm64"
+if /I "%ARCH%"=="ARM64" set "ARCH=arm64"
+
 if not defined ARCH (
-    echo ERROR: Could not detect system architecture.
+    echo ERROR: Could not detect architecture.
     exit /b 1
 )
 
-echo ========================================
+set "DIST=%ROOT%\dist"
+set "WORK=%ROOT%\.build-tmp"
+
+if exist "%DIST%" rmdir /s /q "%DIST%"
+if exist "%WORK%" rmdir /s /q "%WORK%"
+mkdir "%DIST%"
+mkdir "%WORK%"
+
 echo Hello-World compiler
+echo OS: Windows
 echo Architecture: %ARCH%
 echo Target: %TARGET%
-echo ========================================
-
-if exist "%ROOT%\dist" rmdir /s /q "%ROOT%\dist"
-mkdir "%ROOT%\dist"
 
 set /a COUNT=0
 
@@ -35,14 +44,12 @@ for /d %%C in ("%ROOT%\hello\*") do (
                 exit /b 1
             )
 
-            set "DIST_DIR=%ROOT%\dist\%%~nxC\%%~nxL\%TARGET%"
-            if not exist "!DIST_DIR!" mkdir "!DIST_DIR!"
+            set "BUILD_DIR=%WORK%\%%~nxC\%%~nxL"
+            if not exist "!BUILD_DIR!" mkdir "!BUILD_DIR!"
+            set "DIST_DIR=!BUILD_DIR!"
 
             echo.
-            echo ========================================
             echo Building %%~nxC/%%~nxL
-            echo Output: !DIST_DIR!
-            echo ========================================
 
             pushd "%%L"
 
@@ -63,19 +70,40 @@ for /d %%C in ("%ROOT%\hello\*") do (
             )
 
             popd
+
+            set /a EXE_COUNT=0
+            for %%F in ("!BUILD_DIR!\*.exe") do (
+                if exist "%%~fF" (
+                    set /a EXE_COUNT+=1
+                    set "EXE_FILE=%%~fF"
+                )
+            )
+
+            if not "!EXE_COUNT!"=="1" (
+                echo ERROR: Expected exactly one .exe for %%~nxL, found !EXE_COUNT!.
+                dir /s /b "!BUILD_DIR!"
+                exit /b 1
+            )
+
+            copy /y "!EXE_FILE!" "%DIST%\hello-%%~nxL-%ARCH%-Windows.exe" >nul
+            if errorlevel 1 exit /b 1
+
+            echo Created: hello-%%~nxL-%ARCH%-Windows.exe
             set /a COUNT+=1
         ) else (
-            echo Skipping %%~nxC/%%~nxL: architecture not supported
+            echo SKIP: %%~nxC/%%~nxL - architecture not supported
         )
     )
 )
 
 if "%COUNT%"=="0" (
-    echo ERROR: No compatible language was found for %ARCH%.
+    echo ERROR: No compatible language found for %ARCH%.
     exit /b 1
 )
 
+rmdir /s /q "%WORK%"
+
 echo.
-echo Compilation complete: %COUNT% language(s) processed.
-echo Artifacts: %ROOT%\dist\
+echo Compilation complete: %COUNT% executable(s).
+echo Release files: %DIST%
 exit /b 0
