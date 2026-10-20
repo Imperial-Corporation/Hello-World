@@ -12,17 +12,18 @@ echo Nim not found. Installing Nim...
 where winget >nul 2>&1
 if errorlevel 1 (
     echo ERROR: WinGet is unavailable.
-    echo Install Nim manually from https://nim-lang.org/install.html
+    echo Install Nim manually from https://nim-lang.org/install_windows.html
     exit /b 1
 )
 
-winget install --id nim.nim --exact --source winget --accept-source-agreements --accept-package-agreements --disable-interactivity
+winget install --id Nim.Nim --exact --source winget --accept-source-agreements --accept-package-agreements --disable-interactivity
 if errorlevel 1 (
     echo ERROR: WinGet failed to install Nim.
+    echo Install Nim manually from https://nim-lang.org/install_windows.html
     exit /b 1
 )
 
-rem Refresh PATH from common installation locations.
+rem Refresh PATH with common installation locations.
 if exist "%LOCALAPPDATA%\Programs\Nim\bin\nim.exe" (
     set "PATH=%LOCALAPPDATA%\Programs\Nim\bin;%PATH%"
 )
@@ -33,8 +34,7 @@ if exist "%USERPROFILE%\.nimble\bin\nim.exe" (
 
 where nim >nul 2>&1
 if errorlevel 1 (
-    echo ERROR: Nim installation succeeded, but nim.exe is not in PATH.
-    echo Check the installation directory and PATH.
+    echo ERROR: Nim was installed, but nim.exe is not in PATH.
     exit /b 1
 )
 

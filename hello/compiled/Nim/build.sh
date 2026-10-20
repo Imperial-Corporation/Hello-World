@@ -4,6 +4,8 @@ set -Eeuo pipefail
 ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../.." && pwd)"
 LANG_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
+export PATH="${HOME}/.nimble/bin:${PATH}"
+
 : "${DIST_DIR:?DIST_DIR must be set by scripts/compile.sh}"
 
 ARCH="$(
@@ -19,10 +21,10 @@ if [[ ! -f "$SRC" ]]; then
     exit 1
 fi
 
-command -v nim >/dev/null 2>&1 || {
-    echo "ERROR: Nim is not installed." >&2
+if ! command -v nim >/dev/null 2>&1; then
+    echo "ERROR: Nim is not installed or not in PATH." >&2
     exit 1
-}
+fi
 
 mkdir -p "$DIST_DIR"
 
