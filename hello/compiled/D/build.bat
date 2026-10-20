@@ -26,24 +26,17 @@ if not exist "%SRC%" (
 
 if not exist "%DIST_DIR%" mkdir "%DIST_DIR%"
 
-REM Locate LDC even when its directory is missing from PATH.
-where ldc2 >nul 2>&1
-if errorlevel 1 (
-    for /d %%D in ("C:\tools\ldc2-*-windows-multilib") do (
-        if exist "%%~D\bin\ldc2.exe" (
-            set "LDC_BIN=%%~D\bin"
-        )
-    )
-
-    if defined LDC_BIN (
-        set "PATH=%LDC_BIN%;%PATH%"
+REM Find LDC and add its directory to PATH.
+for /d %%D in ("C:\tools\ldc2-*-windows-multilib") do (
+    if exist "%%~D\bin\ldc2.exe" (
+        set "PATH=%%~D\bin;%PATH%"
     )
 )
 
 where ldc2 >nul 2>&1
 if errorlevel 1 (
     echo ERROR: LDC compiler not found.
-    echo Checked PATH and C:\tools\ldc2-*-windows-multilib\bin.
+    echo PATH=%PATH%
     exit /b 1
 )
 
