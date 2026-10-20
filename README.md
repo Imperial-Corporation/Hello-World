@@ -4,26 +4,10 @@ Hello, world !
 # Architectures
 
 - [x] Linux x86-64
-- [ ] ubuntu-latest
-- [ ] ubuntu-22.04
-- [ ] ubuntu-24.04
-- [ ] ubuntu-26.04
-- [ ] ubuntu-slim
-
 - [x] Linux ARM64
-- [ ] ubuntu-22.04-arm
-- [ ] ubuntu-24.04-arm
-- [ ] ubuntu-26.04-arm
 
 - [x] Windows x86-64
-- [ ] windows-2022
-- [ ] windows-2025
-- [ ] windows-2025-vs2026
-- [ ] windows-latest
-
 - [x] Windows ARM64
-- [ ] windows-11-arm
-- [ ] windows-11-vs2026-arm
 
 # Languages
 
@@ -50,7 +34,7 @@ Hello, world !
 - [x] D
 - [ ] E
 - [x] Go
-- [ ] Nim
+- [x] Nim
 - [ ] Zig
 - [ ] V
 - [ ] Ruby
@@ -64,3 +48,5 @@ Hello, world !
 - [ ] PHP
 - [ ] Pony
 - [ ] Pascal
+- [ ] Shell
+- [ ] Batch
