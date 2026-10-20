@@ -26,6 +26,7 @@ Hello, world !
 - [ ] LISP
 - [ ] CPL
 - [ ] BCPL
+- [ ] ABC
 - [ ] B
 - [x] C
 - [ ] Objective-C
@@ -35,7 +36,7 @@ Hello, world !
 - [ ] E
 - [x] Go
 - [x] Nim
-- [ ] Zig
+- [x] Zig
 - [ ] V
 - [ ] Ruby
 - [ ] R
