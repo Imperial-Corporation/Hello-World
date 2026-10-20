@@ -73,12 +73,27 @@ jobs:
 
           count="$(find dist -maxdepth 1 -type f | wc -l)"
           if [[ "$count" -eq 0 ]]; then
-            echo "ERROR: No release executables were produced."
+            echo "ERROR: No release artifacts were produced."
             exit 1
           fi
 
           if find dist -mindepth 2 -print -quit | grep -q .; then
             echo "ERROR: Unexpected nested files in dist/."
+            exit 1
+          fi
+
+          invalid=0
+
+          while IFS= read -r -d '' file; do
+            name="$(basename "$file")"
+
+            if [[ ! "$name" =~ ^hello-.+-(x86_64|arm64)-Linux(\.[A-Za-z0-9._+-]+)?$ ]]; then
+              echo "ERROR: Invalid release filename: $name"
+              invalid=1
+            fi
+          done < <(find dist -maxdepth 1 -type f -print0)
+
+          if [[ "$invalid" -ne 0 ]]; then
             exit 1
           fi
 
@@ -95,18 +110,24 @@ jobs:
           $files = @(Get-ChildItem 'dist' -File)
 
           if ($files.Count -eq 0) {
-            throw 'ERROR: No release executables were produced.'
+            throw 'ERROR: No release artifacts were produced.'
           }
 
           $files | ForEach-Object { Write-Host $_.Name }
 
           $invalid = @($files | Where-Object {
-            $_.Extension -ne '.exe' -or
-            $_.Name -notmatch '^hello-.+-(x86_64|arm64)-Windows\.exe$'
+            $_.Name -notmatch '^hello-.+-(x86_64|arm64)-Windows(\.[A-Za-z0-9._+-]+)?$'
           })
 
           if ($invalid.Count -gt 0) {
             throw "ERROR: Invalid release filenames: $($invalid.Name -join ', ')"
+          }
+
+          $nested = @(Get-ChildItem 'dist' -Recurse -File |
+            Where-Object { $_.DirectoryName -ne (Resolve-Path 'dist').Path })
+
+          if ($nested.Count -gt 0) {
+            throw 'ERROR: Unexpected nested files in dist/.'
           }
 
       - name: Upload compiled files

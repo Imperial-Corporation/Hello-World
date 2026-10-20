@@ -42,7 +42,7 @@ Hello, world !
 - [x] Python
 - [x] Java
 - [ ] HTML/CSS
-- [ ] JavaScript
+- [x] JavaScript
 - [ ] PHP
 - [ ] Pony
 - [ ] Pascal
