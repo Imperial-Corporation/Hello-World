@@ -16,21 +16,25 @@ if errorlevel 1 (
     exit /b 1
 )
 
-winget install --id Nim.Nim --exact --accept-source-agreements --accept-package-agreements
+winget install --id nim.nim --exact --source winget --accept-source-agreements --accept-package-agreements --disable-interactivity
 if errorlevel 1 (
-    echo ERROR: Failed to install Nim using WinGet.
+    echo ERROR: WinGet failed to install Nim.
     exit /b 1
 )
 
-rem Refresh PATH for the current process if WinGet installed Nim in a standard location.
-if exist "%LOCALAPPDATA%\Programs\Nim\bin" (
+rem Refresh PATH from common installation locations.
+if exist "%LOCALAPPDATA%\Programs\Nim\bin\nim.exe" (
     set "PATH=%LOCALAPPDATA%\Programs\Nim\bin;%PATH%"
+)
+
+if exist "%USERPROFILE%\.nimble\bin\nim.exe" (
+    set "PATH=%USERPROFILE%\.nimble\bin;%PATH%"
 )
 
 where nim >nul 2>&1
 if errorlevel 1 (
-    echo ERROR: Nim was installed, but is not available in PATH.
-    echo Restart the terminal or update PATH, then retry.
+    echo ERROR: Nim installation succeeded, but nim.exe is not in PATH.
+    echo Check the installation directory and PATH.
     exit /b 1
 )
 

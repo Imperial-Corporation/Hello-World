@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
+# Make choosenim-installed tools available in this process.
+export PATH="${HOME}/.nimble/bin:${PATH}"
+
 if command -v nim >/dev/null 2>&1; then
     nim --version
     exit 0
@@ -31,6 +34,7 @@ curl --fail --silent --show-error --location \
     https://nim-lang.org/choosenim/init.sh |
     sh -s -- -y
 
+# choosenim installs Nim in this directory by default.
 export PATH="${HOME}/.nimble/bin:${PATH}"
 
 if ! command -v nim >/dev/null 2>&1; then
