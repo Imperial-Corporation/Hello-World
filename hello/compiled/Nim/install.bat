@@ -31,31 +31,24 @@ if errorlevel 1 (
 
 del "%NIM_ZIP%" >nul 2>&1
 
-rem Locate nim.exe in the extracted archive.
-set "NIM_BIN="
-for /r "%NIM_DIR%" %%F in (nim.exe) do (
-    set "NIM_BIN=%%~dpF"
+rem Find the actual compiler path inside the extracted archive.
+for /f "delims=" %%F in ('where /r "%NIM_DIR%" nim.exe 2^>nul') do (
+    set "NIM_EXE=%%F"
     goto :nim_found
 )
 
+echo ERROR: nim.exe was not found after extraction.
+dir "%NIM_DIR%" /s /b
+exit /b 1
+
 :nim_found
-if not defined NIM_BIN (
-    echo ERROR: nim.exe was not found in %NIM_DIR%.
-    exit /b 1
-)
+for %%F in ("%NIM_EXE%") do set "NIM_BIN=%%~dpF"
+set "PATH=%NIM_BIN%;%PATH%"
 
-rem Add Nim and Nimble to PATH.
-set "PATH=%NIM_BIN%;%NIM_DIR%\nimble\bin;%PATH%"
-
-rem Verify the executable directly, independently of PATH lookup.
-if not exist "%NIM_BIN%nim.exe" (
-    echo ERROR: Nim executable does not exist: %NIM_BIN%nim.exe
-    exit /b 1
-)
-
-"%NIM_BIN%nim.exe" --version
+echo Found Nim: %NIM_EXE%
+"%NIM_EXE%" --version
 if errorlevel 1 (
-    echo ERROR: Nim executable failed to run.
+    echo ERROR: Nim failed to start.
     exit /b 1
 )
 
