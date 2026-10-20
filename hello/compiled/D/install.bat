@@ -29,7 +29,7 @@ if not errorlevel 1 (
     exit /b 0
 )
 
-REM Chocolatey may have installed LDC without refreshing this process PATH.
+REM Locate LDC directly because PATH changes may not persist.
 for /d %%D in ("C:\tools\ldc2-*-windows-multilib") do (
     if exist "%%~D\bin\ldc2.exe" (
         set "PATH=%%~D\bin;%PATH%"
