@@ -26,13 +26,11 @@ Hello, world !
 - [ ] LISP
 - [ ] CPL
 - [ ] BCPL
-- [ ] B
 - [x] C
 - [x] Objective-C
 - [x] C++
 - [x] C#
 - [x] D
-- [ ] E
 - [x] Go
 - [x] Nim
 - [x] Zig
@@ -42,7 +40,7 @@ Hello, world !
 - [x] Rust
 - [ ] Kite
 - [x] Python
-- [ ] Java
+- [x] Java
 - [ ] HTML/CSS
 - [ ] JavaScript
 - [ ] PHP
