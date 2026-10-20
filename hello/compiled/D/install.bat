@@ -1,25 +1,20 @@
 @echo off
 setlocal EnableExtensions
 
+set "LDC_EXE="
+
+REM Check whether ldc2 is already available.
 where ldc2 >nul 2>&1
-if not errorlevel 1 (
-    echo LDC is already available.
-    exit /b 0
-)
+if not errorlevel 1 set "LDC_EXE=ldc2"
 
-REM Check for an existing installation.
-for /d %%D in ("C:\tools\ldc2-*-windows-multilib") do (
-    if exist "%%~D\bin\ldc2.exe" (
-        set "PATH=%%~D\bin;%PATH%"
-    )
-)
+if defined LDC_EXE goto :found
 
-where ldc2 >nul 2>&1
-if not errorlevel 1 (
-    echo LDC is available.
-    exit /b 0
-)
+REM Search Chocolatey's default installation directory.
+for /d %%D in ("C:\tools\ldc2-*-windows-multilib") do if exist "%%~D\bin\ldc2.exe" set "LDC_EXE=%%~D\bin\ldc2.exe"
 
+if defined LDC_EXE goto :found
+
+REM Install LDC only if it is missing.
 where choco >nul 2>&1
 if errorlevel 1 (
     echo ERROR: Chocolatey is not installed.
@@ -33,19 +28,20 @@ if errorlevel 1 (
     exit /b 1
 )
 
-REM Add the installed compiler to this process PATH.
-for /d %%D in ("C:\tools\ldc2-*-windows-multilib") do (
-    if exist "%%~D\bin\ldc2.exe" (
-        set "PATH=%%~D\bin;%PATH%"
-    )
-)
+REM Locate the installed compiler without modifying PATH.
+for /d %%D in ("C:\tools\ldc2-*-windows-multilib") do if exist "%%~D\bin\ldc2.exe" set "LDC_EXE=%%~D\bin\ldc2.exe"
 
-where ldc2 >nul 2>&1
-if errorlevel 1 (
-    echo ERROR: LDC was installed but ldc2.exe was not found in PATH.
+if not defined LDC_EXE (
+    echo ERROR: ldc2.exe was not found after installation.
     exit /b 1
 )
 
-echo LDC installation completed successfully.
-ldc2 --version
+:found
+echo LDC installation check successful.
+"%LDC_EXE%" --version
+if errorlevel 1 (
+    echo ERROR: LDC could not be executed.
+    exit /b 1
+)
+
 exit /b 0

@@ -26,24 +26,29 @@ if not exist "%SRC%" (
 
 if not exist "%DIST_DIR%" mkdir "%DIST_DIR%"
 
-REM Find LDC and add its directory to PATH.
-for /d %%D in ("C:\tools\ldc2-*-windows-multilib") do (
-    if exist "%%~D\bin\ldc2.exe" (
-        set "PATH=%%~D\bin;%PATH%"
-    )
-)
+REM Find LDC without modifying PATH.
+set "LDC_EXE="
 
 where ldc2 >nul 2>&1
-if errorlevel 1 (
+if not errorlevel 1 set "LDC_EXE=ldc2"
+
+if not defined LDC_EXE (
+    for /d %%D in ("C:\tools\ldc2-*-windows-multilib") do if exist "%%~D\bin\ldc2.exe" set "LDC_EXE=%%~D\bin\ldc2.exe"
+)
+
+if not defined LDC_EXE (
     echo ERROR: LDC compiler not found.
-    echo PATH=%PATH%
     exit /b 1
 )
 
 echo Using LDC:
-where ldc2
+"%LDC_EXE%" --version
+if errorlevel 1 (
+    echo ERROR: LDC could not be executed.
+    exit /b 1
+)
 
-ldc2 -O2 -of="%DIST_DIR%\hello.exe" "%SRC%"
+"%LDC_EXE%" -O2 -of="%DIST_DIR%\hello.exe" "%SRC%"
 if errorlevel 1 (
     echo ERROR: D compilation failed.
     exit /b 1
