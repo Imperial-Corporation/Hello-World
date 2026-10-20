@@ -14,7 +14,7 @@ if /I "%ARCH%"=="arm64" (
     set "SRC_DIR=%ROOT%x86_64\src"
 )
 
-if not exist "%SRC_DIR%\Hello.java" (
+if not exist "%SRC_DIR%\hello.java" (
     echo ERROR: Java source not found.
     exit /b 1
 )
@@ -32,7 +32,7 @@ where jar >nul 2>&1 || (
 if not exist "%DIST_DIR%\classes" mkdir "%DIST_DIR%\classes"
 if errorlevel 1 exit /b 1
 
-javac -d "%DIST_DIR%\classes" "%SRC_DIR%\Hello.java"
+javac -d "%DIST_DIR%\classes" "%SRC_DIR%\hello.java"
 if errorlevel 1 exit /b 1
 
 pushd "%DIST_DIR%\classes"

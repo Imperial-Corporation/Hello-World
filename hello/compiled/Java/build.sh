@@ -11,7 +11,7 @@ else
     SRC_DIR="$ROOT/x86_64/src"
 fi
 
-SOURCE="$SRC_DIR/Hello.java"
+SOURCE="$SRC_DIR/hello.java"
 
 if [[ ! -f "$SOURCE" ]]; then
     echo "ERROR: Source file not found: $SOURCE" >&2
