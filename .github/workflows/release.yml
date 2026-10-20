@@ -1,0 +1,94 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '**'
+
+permissions:
+  contents: read
+
+jobs:
+  compile:
+    name: Compile (${{ matrix.id }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 120
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: linux-x86_64
+            runner: ubuntu-24.04
+          - id: linux-arm64
+            runner: ubuntu-24.04-arm
+          - id: windows-x86_64
+            runner: windows-2025
+          - id: windows-arm64
+            runner: windows-11-arm
+          - id: macos-x86_64
+            runner: macos-15-intel
+          - id: macos-arm64
+            runner: macos-15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set executable permissions
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          chmod +x scripts/*.sh
+          find hello -type f -name '*.sh' -exec chmod +x {} +
+
+      - name: Update system (Linux/macOS)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: ./scripts/install.sh
+
+      - name: Update system (Windows)
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: call scripts\install.bat
+
+      - name: Compile all compatible languages (Linux/macOS)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: ./scripts/compile.sh
+
+      - name: Compile all compatible languages (Windows)
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: call scripts\compile.bat
+
+      - name: Upload compiled files
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ matrix.id }}
+          path: dist/
+          if-no-files-found: warn
+          retention-days: 7
+
+  release:
+    name: Publish GitHub Release
+    needs: compile
+    runs-on: ubuntu-24.04
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: dist-*
+          path: dist
+          merge-multiple: true
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/**/*
+          generate_release_notes: true
