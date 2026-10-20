@@ -18,6 +18,7 @@ echo Downloading Nim %NIM_VERSION%...
 
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
     "$ErrorActionPreference = 'Stop';" ^
+    "$ProgressPreference = 'SilentlyContinue';" ^
     "Invoke-WebRequest -Uri '%NIM_URL%' -OutFile '%NIM_ZIP%';" ^
     "if (Test-Path '%NIM_DIR%') { Remove-Item '%NIM_DIR%' -Recurse -Force };" ^
     "New-Item -ItemType Directory -Path '%NIM_DIR%' -Force | Out-Null;" ^
@@ -30,8 +31,8 @@ if errorlevel 1 (
 
 del "%NIM_ZIP%" >nul 2>&1
 
+rem Locate nim.exe in the extracted archive.
 set "NIM_BIN="
-
 for /r "%NIM_DIR%" %%F in (nim.exe) do (
     set "NIM_BIN=%%~dpF"
     goto :nim_found
@@ -39,20 +40,24 @@ for /r "%NIM_DIR%" %%F in (nim.exe) do (
 
 :nim_found
 if not defined NIM_BIN (
-    echo ERROR: nim.exe was not found after extraction.
+    echo ERROR: nim.exe was not found in %NIM_DIR%.
     exit /b 1
 )
 
+rem Add Nim and Nimble to PATH.
 set "PATH=%NIM_BIN%;%NIM_DIR%\nimble\bin;%PATH%"
 
-where nim >nul 2>&1
-if errorlevel 1 (
-    echo ERROR: Nim is not available.
+rem Verify the executable directly, independently of PATH lookup.
+if not exist "%NIM_BIN%nim.exe" (
+    echo ERROR: Nim executable does not exist: %NIM_BIN%nim.exe
     exit /b 1
 )
 
-nim --version
-if errorlevel 1 exit /b 1
+"%NIM_BIN%nim.exe" --version
+if errorlevel 1 (
+    echo ERROR: Nim executable failed to run.
+    exit /b 1
+)
 
 echo Nim installation completed successfully.
 exit /b 0
