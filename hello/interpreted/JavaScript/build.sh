@@ -23,9 +23,10 @@ case "${ARCH:-x86_64}" in
 esac
 
 SOURCE="$SRC_DIR/hello.js"
+OUTPUT="$DIST_DIR/hello"
 
 if [[ ! -f "$SOURCE" ]]; then
-    echo "ERROR: Source file not found: $SOURCE" >&2
+    echo "ERROR: JavaScript source file not found: $SOURCE" >&2
     exit 1
 fi
 
@@ -34,16 +35,19 @@ command -v bun >/dev/null 2>&1 || {
     exit 1
 }
 
-bun build --compile --minify 
-    --target="$BUN_TARGET" 
-    "$SOURCE" 
-    --outfile "$DIST_DIR/hello"
+mkdir -p "$DIST_DIR"
 
-test -f "$DIST_DIR/hello" || {
+echo "JavaScript source: $SOURCE"
+echo "Bun target: $BUN_TARGET"
+echo "Output: $OUTPUT"
+
+bun build "$SOURCE" --compile --minify --target="$BUN_TARGET" --outfile "$OUTPUT"
+
+if [[ ! -f "$OUTPUT" ]]; then
     echo "ERROR: Compiled executable was not created." >&2
     exit 1
-}
+fi
 
-chmod +x "$DIST_DIR/hello"
+chmod +x "$OUTPUT"
 
-echo "Built standalone executable: $DIST_DIR/hello"
+echo "JavaScript standalone executable built: $OUTPUT"
