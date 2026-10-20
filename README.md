@@ -26,10 +26,9 @@ Hello, world !
 - [ ] LISP
 - [ ] CPL
 - [ ] BCPL
-- [ ] ABC
 - [ ] B
 - [x] C
-- [ ] Objective-C
+- [x] Objective-C
 - [x] C++
 - [ ] C#
 - [x] D
