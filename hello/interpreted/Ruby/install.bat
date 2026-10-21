@@ -18,19 +18,30 @@ if errorlevel 1 (
     exit /b 1
 )
 
+set "GEM_HOME=%DIST_DIR%\.gems"
+set "GEM_PATH=%GEM_HOME%"
+set "GEM_BIN=%GEM_HOME%\bin"
+
+if not exist "%GEM_BIN%" mkdir "%GEM_BIN%"
+
 ruby --version
-if errorlevel 1 exit /b 1
-
 gem --version
-if errorlevel 1 exit /b 1
 
-if not exist "%DIST_DIR%\.gems" mkdir "%DIST_DIR%\.gems"
-
-gem install ocran --no-document --install-dir "%DIST_DIR%\.gems"
+gem install ocran --no-document --install-dir "%GEM_HOME%" --bindir "%GEM_BIN%"
 if errorlevel 1 (
     echo ERROR: OCRAN installation failed.
     exit /b 1
 )
 
-echo OCRAN installed successfully.
+gem list --local ocran
+
+if not exist "%GEM_HOME%\gems\ocran-*" (
+    echo ERROR: OCRAN gem files were not found.
+    exit /b 1
+)
+
+echo Installed executables:
+dir "%GEM_BIN%"
+
+echo OCRAN installation successful.
 exit /b 0

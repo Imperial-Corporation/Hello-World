@@ -9,7 +9,8 @@ if not defined DIST_DIR (
 set "ROOT=%~dp0"
 set "GEM_HOME=%DIST_DIR%\.gems"
 set "GEM_PATH=%GEM_HOME%"
-set "PATH=%GEM_HOME%\bin;%PATH%"
+set "GEM_BIN=%GEM_HOME%\bin"
+set "PATH=%GEM_BIN%;%PATH%"
 
 if /I "%ARCH%"=="arm64" (
     set "SOURCE=%ROOT%arm64\src\hello.rb"
@@ -24,14 +25,16 @@ if not exist "%SOURCE%" (
     exit /b 1
 )
 
-if not exist "%GEM_HOME%\bin\ocran.bat" if not exist "%GEM_HOME%\bin\ocran" (
-    echo ERROR: OCRAN executable not found in "%GEM_HOME%\bin".
-    echo Installed gems:
-    gem list --local ocran
+echo Checking OCRAN installation...
+gem list --local ocran
+
+ruby -e "require 'rubygems'; spec = Gem::Specification.find_by_name('ocran'); puts spec.full_gem_path"
+if errorlevel 1 (
+    echo ERROR: OCRAN is not installed in GEM_HOME=%GEM_HOME%
     exit /b 1
 )
 
-ruby -S ocran "%SOURCE%" --output "%DIST_DIR%\hello.exe"
+ruby -e "require 'rubygems'; spec = Gem::Specification.find_by_name('ocran'); load Gem.bin_path('ocran', 'ocran') " -- "%SOURCE%" --output "%DIST_DIR%\hello.exe"
 if errorlevel 1 (
     echo ERROR: OCRAN compilation failed.
     exit /b 1
