@@ -18,8 +18,13 @@ if errorlevel 1 (
     exit /b 1
 )
 
-ruby -e "abort('ERROR: Ruby 3.3 or newer is required.') if Gem::Version.new(RUBY_VERSION) < Gem::Version.new('3.3')"
+ruby --version
 if errorlevel 1 exit /b 1
+
+gem --version
+if errorlevel 1 exit /b 1
+
+if not exist "%DIST_DIR%\.gems" mkdir "%DIST_DIR%\.gems"
 
 gem install ocran --no-document --install-dir "%DIST_DIR%\.gems"
 if errorlevel 1 (
@@ -27,5 +32,5 @@ if errorlevel 1 (
     exit /b 1
 )
 
-ruby --version
+echo OCRAN installed successfully.
 exit /b 0

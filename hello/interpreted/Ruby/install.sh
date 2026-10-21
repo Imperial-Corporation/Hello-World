@@ -13,13 +13,13 @@ if ! command -v gem >/dev/null 2>&1; then
     exit 1
 fi
 
-ruby -e '
-  major, minor = RUBY_VERSION.split(".").map(&:to_i)
-  abort "ERROR: Ruby 3.3 or newer is required; found #{RUBY_VERSION}" if
-    major < 3 || (major == 3 && minor < 3)
-'
+ruby --version
+gem --version
 
-gem install ocran --no-document --install-dir "$DIST_DIR/.gems"
+mkdir -p "$DIST_DIR/.gems"
 
-echo "Ruby version: $(ruby --version)"
-echo "OCRAN installed."
+gem install ocran \
+    --no-document \
+    --install-dir "$DIST_DIR/.gems"
+
+echo "OCRAN installed successfully."
