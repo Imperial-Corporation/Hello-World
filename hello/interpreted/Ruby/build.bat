@@ -2,7 +2,7 @@
 setlocal EnableExtensions
 
 if not defined DIST_DIR (
-    echo ERROR: DIST_DIR must be set by the central compile script.
+    echo ERROR: DIST_DIR is not set.
     exit /b 1
 )
 
@@ -21,27 +21,28 @@ if /I "%ARCH%"=="arm64" (
 )
 
 if not exist "%SOURCE%" (
-    echo ERROR: Source not found: "%SOURCE%"
+    echo ERROR: Ruby source not found: "%SOURCE%"
     exit /b 1
 )
 
-echo Checking OCRAN installation...
-gem list --local ocran
-
+echo ==== Checking OCRAN gem ====
 ruby -e "require 'rubygems'; spec = Gem::Specification.find_by_name('ocran'); puts spec.full_gem_path"
 if errorlevel 1 (
-    echo ERROR: OCRAN is not installed in GEM_HOME=%GEM_HOME%
+    echo ERROR: OCRAN is not available in GEM_HOME=%GEM_HOME%
+    echo Run install.bat and inspect its log.
     exit /b 1
 )
 
-ruby -e "require 'rubygems'; spec = Gem::Specification.find_by_name('ocran'); load Gem.bin_path('ocran', 'ocran') " -- "%SOURCE%" --output "%DIST_DIR%\hello.exe"
+echo ==== Building standalone executable ====
+ruby -e "require 'rubygems'; load Gem.bin_path('ocran', 'ocran')" -- "%SOURCE%" --output "%DIST_DIR%\hello.exe"
 if errorlevel 1 (
-    echo ERROR: OCRAN compilation failed.
+    echo ERROR: OCRAN failed to build the executable.
     exit /b 1
 )
 
 if not exist "%DIST_DIR%\hello.exe" (
-    echo ERROR: Executable was not created.
+    echo ERROR: Expected executable was not created.
+    dir "%DIST_DIR%"
     exit /b 1
 )
 

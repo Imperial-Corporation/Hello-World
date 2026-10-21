@@ -2,13 +2,13 @@
 setlocal EnableExtensions
 
 if not defined DIST_DIR (
-    echo ERROR: DIST_DIR must be set by the central compile script.
+    echo ERROR: DIST_DIR is not set.
     exit /b 1
 )
 
 where ruby >nul 2>&1
 if errorlevel 1 (
-    echo ERROR: Ruby is not installed on this runner.
+    echo ERROR: Ruby is not installed.
     exit /b 1
 )
 
@@ -27,21 +27,27 @@ if not exist "%GEM_BIN%" mkdir "%GEM_BIN%"
 ruby --version
 gem --version
 
-gem install ocran --no-document --install-dir "%GEM_HOME%" --bindir "%GEM_BIN%"
+gem install ocran --no-document --install-dir "%GEM_HOME%" --bindir "%GEM_BIN%" --verbose
 if errorlevel 1 (
-    echo ERROR: OCRAN installation failed.
+    echo ERROR: Failed to install OCRAN.
     exit /b 1
 )
 
-gem list --local ocran
+echo ==== Installed OCRAN gem ====
+gem list --local
 
-if not exist "%GEM_HOME%\gems\ocran-*" (
-    echo ERROR: OCRAN gem files were not found.
-    exit /b 1
-)
+echo ==== Gem environment ====
+gem env
 
-echo Installed executables:
+echo ==== Gem files ====
+dir "%GEM_HOME%"
 dir "%GEM_BIN%"
 
-echo OCRAN installation successful.
+ruby -e "require 'rubygems'; puts Gem::Specification.find_by_name('ocran').full_gem_path"
+if errorlevel 1 (
+    echo ERROR: RubyGems cannot locate OCRAN.
+    exit /b 1
+)
+
+echo OCRAN installation verified.
 exit /b 0
