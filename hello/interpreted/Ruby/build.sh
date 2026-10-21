@@ -33,6 +33,24 @@ fi
 
 OUTPUT="$DIST_DIR/hello"
 
+LIBRUBY_NAME="$(ruby -rrbconfig -e 'print RbConfig::CONFIG["LIBRUBY_SO"]')"
+EXPECTED="/usr/lib/$LIBRUBY_NAME"
+
+if [[ ! -e "$EXPECTED" ]]; then
+    LIBRUBY_PATH="$(ldconfig -p | awk -v name="$LIBRUBY_NAME" '
+        index($0, name) { print $NF; exit }
+    ')"
+
+    if [[ -z "$LIBRUBY_PATH" || ! -e "$LIBRUBY_PATH" ]]; then
+        echo "ERROR: Cannot locate $LIBRUBY_NAME." >&2
+        ldconfig -p | grep libruby || true
+        exit 1
+    fi
+
+    echo "Ruby library found at: $LIBRUBY_PATH"
+    sudo ln -s "$LIBRUBY_PATH" "$EXPECTED"
+fi
+
 ocran "$SOURCE" --output "$OUTPUT"
 
 if [[ ! -f "$OUTPUT" ]]; then

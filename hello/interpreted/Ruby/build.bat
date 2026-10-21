@@ -7,10 +7,6 @@ if not defined DIST_DIR (
 )
 
 set "ROOT=%~dp0"
-set "GEM_HOME=%DIST_DIR%\.gems"
-set "GEM_PATH=%GEM_HOME%"
-set "GEM_BIN=%GEM_HOME%\bin"
-set "PATH=%GEM_BIN%;%PATH%"
 
 if /I "%ARCH%"=="arm64" (
     set "SOURCE=%ROOT%arm64\src\hello.rb"
@@ -21,28 +17,24 @@ if /I "%ARCH%"=="arm64" (
 )
 
 if not exist "%SOURCE%" (
-    echo ERROR: Ruby source not found: "%SOURCE%"
+    echo ERROR: Source not found: "%SOURCE%"
     exit /b 1
 )
 
-echo ==== Checking OCRAN gem ====
-ruby -e "require 'rubygems'; spec = Gem::Specification.find_by_name('ocran'); puts spec.full_gem_path"
+ruby -e "require 'rubygems'; puts Gem::Specification.find_by_name('ocran').full_gem_path"
 if errorlevel 1 (
-    echo ERROR: OCRAN is not available in GEM_HOME=%GEM_HOME%
-    echo Run install.bat and inspect its log.
+    echo ERROR: OCRAN is not installed in the active Ruby environment.
     exit /b 1
 )
 
-echo ==== Building standalone executable ====
-ruby -e "require 'rubygems'; load Gem.bin_path('ocran', 'ocran')" -- "%SOURCE%" --output "%DIST_DIR%\hello.exe"
+ruby -S ocran "%SOURCE%" --output "%DIST_DIR%\hello.exe"
 if errorlevel 1 (
-    echo ERROR: OCRAN failed to build the executable.
+    echo ERROR: OCRAN compilation failed.
     exit /b 1
 )
 
 if not exist "%DIST_DIR%\hello.exe" (
     echo ERROR: Expected executable was not created.
-    dir "%DIST_DIR%"
     exit /b 1
 )
 
