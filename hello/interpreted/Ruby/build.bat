@@ -24,13 +24,14 @@ if not exist "%SOURCE%" (
     exit /b 1
 )
 
-where ocran >nul 2>&1
-if errorlevel 1 (
-    echo ERROR: OCRAN not found. Run install.bat first.
+if not exist "%GEM_HOME%\bin\ocran.bat" if not exist "%GEM_HOME%\bin\ocran" (
+    echo ERROR: OCRAN executable not found in "%GEM_HOME%\bin".
+    echo Installed gems:
+    gem list --local ocran
     exit /b 1
 )
 
-ocran "%SOURCE%" --output "%DIST_DIR%\hello.exe"
+ruby -S ocran "%SOURCE%" --output "%DIST_DIR%\hello.exe"
 if errorlevel 1 (
     echo ERROR: OCRAN compilation failed.
     exit /b 1
