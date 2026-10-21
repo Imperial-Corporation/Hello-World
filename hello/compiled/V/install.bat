@@ -25,21 +25,26 @@ if not exist "%V_DIR%\v.exe" (
 
     pushd "%V_DIR%"
     call makev.bat
-    set "BUILD_ERROR=%ERRORLEVEL%"
     popd
 
-    if not "%BUILD_ERROR%"=="0" (
-        echo ERROR: Could not compile the V compiler.
+    rem Check the actual compiler output instead of relying
+    rem only on makev.bat's exit code.
+    if not exist "%V_DIR%\v.exe" (
+        echo ERROR: V compiler was not created.
         exit /b 1
     )
 )
 
 if not exist "%V_DIR%\v.exe" (
-    echo ERROR: V compiler was not created.
+    echo ERROR: V compiler not found after installation.
     exit /b 1
 )
 
 "%V_DIR%\v.exe" version
-if errorlevel 1 exit /b 1
+if errorlevel 1 (
+    echo ERROR: V compiler cannot run.
+    exit /b 1
+)
 
+echo V installation successful.
 exit /b 0
