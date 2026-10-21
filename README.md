@@ -35,7 +35,7 @@ Hello, world !
 - [x] Nim
 - [x] Zig
 - [x] V
-- [ ] Ruby
+- [x] Ruby
 - [ ] R
 - [x] Rust
 - [ ] Kite
