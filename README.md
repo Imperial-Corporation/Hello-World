@@ -34,7 +34,7 @@ Hello, world !
 - [x] Go
 - [x] Nim
 - [x] Zig
-- [ ] V
+- [x] V
 - [ ] Ruby
 - [ ] R
 - [x] Rust
