@@ -1,31 +1,37 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-: "${DIST_DIR:?ERROR: DIST_DIR must be set by the central compile script}"
+ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 
-case "${ARCH:-x86_64}" in
-    x86_64|amd64)
-        SOURCE="$ROOT/x86_64/src/hello.rb"
-        ;;
-    arm64|aarch64)
-        SOURCE="$ROOT/arm64/src/hello.rb"
-        ;;
-    *)
-        echo "ERROR: Unsupported architecture: ${ARCH:-unknown}" >&2
-        exit 1
-        ;;
-esac
+echo "Setting executable permissions..."
 
-if [[ ! -f "$SOURCE" ]]; then
-    echo "ERROR: Ruby source not found: $SOURCE" >&2
+find "$ROOT/scripts" "$ROOT/hello" \
+    -type f -name '*.sh' -exec chmod +x {} +
+
+echo "Updating system packages..."
+
+if command -v apt-get >/dev/null 2>&1; then
+    sudo apt-get update
+    sudo apt-get upgrade -y
+    sudo apt-get autoremove -y
+
+elif command -v dnf >/dev/null 2>&1; then
+    sudo dnf upgrade --refresh -y
+
+elif command -v pacman >/dev/null 2>&1; then
+    sudo pacman -Syu --noconfirm
+
+elif command -v zypper >/dev/null 2>&1; then
+    sudo zypper refresh
+    sudo zypper update -y
+
+elif command -v brew >/dev/null 2>&1; then
+    brew update
+    brew upgrade
+
+else
+    echo "Unsupported package manager." >&2
     exit 1
 fi
 
-echo "Ruby version: $(ruby --version)"
-echo "Ruby shared libraries:"
-ldconfig -p | grep -E 'libruby' || true
-
-echo "ERROR: OCRAN cannot locate the exact libruby version required by this runner."
-echo "A compatible Ruby runtime/package is needed before building a standalone executable." >&2
-exit 1
+echo "System update completed successfully."
