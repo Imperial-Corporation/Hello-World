@@ -19,8 +19,8 @@ fi
 mkdir -p "$DIST_DIR"
 
 command -v gplc >/dev/null 2>&1 || {
-    echo "ERROR: gplc not found. Run install.sh first." >&2
-    exit 1
+    echo "SKIP: gplc not found (GNU Prolog is not available on this platform)." >&2
+    exit 77
 }
 
 gplc --version 2>&1 | head -n 2 || true
