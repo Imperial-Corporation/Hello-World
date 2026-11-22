@@ -7,7 +7,12 @@ if not defined DIST_DIR (
 )
 
 set "ROOT=%~dp0"
-set "V_EXE=%DIST_DIR%\.vlang\v.exe"
+rem Must match the location used by install.bat (outside DIST_DIR).
+if defined LOCALAPPDATA (
+    set "V_EXE=%LOCALAPPDATA%\hello-world\v\v.exe"
+) else (
+    set "V_EXE=%TEMP%\hello-world\v\v.exe"
+)
 set "OUTPUT=%DIST_DIR%\hello.exe"
 
 if /I "%ARCH%"=="arm64" (

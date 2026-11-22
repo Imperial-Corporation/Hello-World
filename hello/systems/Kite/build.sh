@@ -45,8 +45,27 @@ edition = "2026"
 opt_level = 2
 EOF
 
+kite --version
+clang --version | head -n1
+
 (cd "$WORK/hello" && kite build --release)
-cp -- "$WORK/hello/target/hello" "$OUTPUT"
+
+# The output location depends on the Kite version: look for the executable.
+BUILT=""
+for candidate in "$WORK/hello/target/hello" "$WORK/hello/target/release/hello"; do
+    if [[ -f "$candidate" && -x "$candidate" ]]; then
+        BUILT="$candidate"
+        break
+    fi
+done
+
+if [[ -z "$BUILT" ]]; then
+    echo "ERROR: kite did not produce the executable. Files under target/:" >&2
+    find "$WORK/hello/target" -maxdepth 3 -print >&2 || true
+    exit 1
+fi
+
+cp -- "$BUILT" "$OUTPUT"
 chmod +x "$OUTPUT"
 
 if [[ ! -f "$OUTPUT" ]]; then

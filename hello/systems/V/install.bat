@@ -12,7 +12,13 @@ if errorlevel 1 (
     exit /b 1
 )
 
-set "V_DIR=%DIST_DIR%\.vlang"
+rem The V toolchain lives outside DIST_DIR: DIST_DIR must contain only the final
+rem executable, otherwise compile.bat counts the toolchain folder as an artifact.
+if defined LOCALAPPDATA (
+    set "V_DIR=%LOCALAPPDATA%\hello-world\v"
+) else (
+    set "V_DIR=%TEMP%\hello-world\v"
+)
 
 if not exist "%V_DIR%\v.exe" (
     if exist "%V_DIR%" rmdir /s /q "%V_DIR%"
