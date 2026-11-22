@@ -1,0 +1,41 @@
+# Hello World as a complete x86-64 Linux executable (ELF64), written byte by byte.
+# Every line holds hexadecimal bytes; everything after '#' is a comment.
+# The build script only converts this text to the raw bytes of the file.
+
+7f 45 4c 46                                                  # ELF header - e_ident: magic number
+02                                                           # e_ident: ELFCLASS64 (64-bit)
+01                                                           # e_ident: little endian
+01                                                           # e_ident: ELF version 1
+00                                                           # e_ident: System V ABI
+00 00 00 00 00 00 00 00                                      # e_ident: padding
+02 00                                                        # e_type: ET_EXEC (executable file)
+3e 00                                                        # e_machine: EM_X86_64
+01 00 00 00                                                  # e_version
+78 00 40 00 00 00 00 00                                      # e_entry: address of the first instruction
+40 00 00 00 00 00 00 00                                      # e_phoff: program header table offset
+00 00 00 00 00 00 00 00                                      # e_shoff: no section headers
+00 00 00 00                                                  # e_flags
+40 00                                                        # e_ehsize: ELF header size
+38 00                                                        # e_phentsize: program header entry size
+01 00                                                        # e_phnum: one program header
+00 00                                                        # e_shentsize
+00 00                                                        # e_shnum
+00 00                                                        # e_shstrndx
+01 00 00 00                                                  # Program header - p_type: PT_LOAD
+05 00 00 00                                                  # p_flags: readable + executable
+00 00 00 00 00 00 00 00                                      # p_offset: load the whole file
+00 00 40 00 00 00 00 00                                      # p_vaddr: virtual address
+00 00 40 00 00 00 00 00                                      # p_paddr
+b1 00 00 00 00 00 00 00                                      # p_filesz
+b1 00 00 00 00 00 00 00                                      # p_memsz
+00 10 00 00 00 00 00 00                                      # p_align
+b8 01 00 00 00                                               # Code - mov eax, 1        ; sys_write
+bf 01 00 00 00                                               # mov edi, 1        ; file descriptor: stdout
+be 97 00 40 00                                               # mov esi, msg      ; address of the message
+ba 1a 00 00 00                                               # mov edx, 26       ; message length
+0f 05                                                        # syscall
+b8 3c 00 00 00                                               # mov eax, 60       ; sys_exit
+31 ff                                                        # xor edi, edi      ; exit status 0
+0f 05                                                        # syscall
+48 65 6c 6c 6f 20 66 72 6f 6d 20 78 38                       # Data - "Hello from x"
+36 5f 36 34 20 42 69 6e 61 72 79 21 0a                       # "86_64 Binary!\n"

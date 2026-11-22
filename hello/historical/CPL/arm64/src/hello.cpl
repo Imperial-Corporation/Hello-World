@@ -1,0 +1,6 @@
+// Hello World in CPL (Combined Programming Language, 1963).
+// No compiler or interpreter exists for CPL today: this file is the program
+// written in the language, delivered as a source file.
+let Main () be
+{ Write ("Hello from CPL!")
+}

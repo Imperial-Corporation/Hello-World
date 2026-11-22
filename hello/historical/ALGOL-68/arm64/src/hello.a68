@@ -1,0 +1,3 @@
+BEGIN
+    print (("Hello from ALGOL 68!", newline))
+END

@@ -1,0 +1,7 @@
+comment Hello World in ALGOL 58 (International Algebraic Language, 1958).
+        The language defines no input/output: the output procedure below is
+        implementation defined. No compiler for ALGOL 58 exists today, so this
+        file is the program written in the language, delivered as a source file;
+begin
+   outstring (1, "Hello from ALGOL 58!\n")
+end
