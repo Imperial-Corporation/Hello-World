@@ -13,10 +13,12 @@ if errorlevel 1 (
     exit /b 1
 )
 
+rem "gem" is gem.cmd on Windows: without "call", this script would stop as soon
+rem as the gem command returns and the lines below would never run.
 ruby --version
-gem --version
+call gem --version
 
-gem install ocran --no-document
+call gem install ocran --no-document
 if errorlevel 1 (
     echo ERROR: OCRAN installation failed.
     exit /b 1

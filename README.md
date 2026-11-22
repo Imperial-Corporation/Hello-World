@@ -1,6 +1,8 @@
 # Hello-World
 Hello, world !
 
+One "Hello, World" per language, built for every supported platform by the release workflow.
+
 # Architectures
 
 - [x] Linux x86-64
