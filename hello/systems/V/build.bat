@@ -39,6 +39,9 @@ if errorlevel 1 (
     exit /b 1
 )
 
+rem V writes a side file next to the executable: DIST_DIR must keep a single artifact.
+if exist "%OUTPUT%.manifest" del /q "%OUTPUT%.manifest"
+
 if not exist "%OUTPUT%" (
     echo ERROR: V executable was not created.
     exit /b 1

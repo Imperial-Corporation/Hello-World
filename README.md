@@ -97,6 +97,7 @@ Prolog, Perl, Lua, Tcl, AWK, Brainfuck.
 - A language whose toolchain cannot be installed on a runner (`install.sh` exits with code `77`) is skipped
   instead of failing the whole release. This is the case for Pony when `ponyup` is unreachable, and may
   happen for Crystal, Modula-2, Vala and Racket on distributions that do not package them.
+- Prolog (GNU Prolog 1.4.5) is skipped on Linux arm64 when `gplc` cannot compile or run there.
 - Kite is built with the official installer (`kite-lang.pages.dev`); if it fails, the compiler is built from
   `https://github.com/kite-language/kite` with cargo. Kite needs `clang`.
 
