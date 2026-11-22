@@ -30,7 +30,9 @@ if not exist "%DIST_DIR%" mkdir "%DIST_DIR%"
 
 where clang++ >nul 2>&1
 if not errorlevel 1 (
-    clang++ -std=c++17 -O2 -Wall -Wextra "%SRC%" -o "%OUTPUT%"
+    rem The MSVC STL of recent Visual Studio releases refuses clang older than its
+    rem own minimum (error STL1000); this documented macro lifts the version check.
+    clang++ -std=c++17 -O2 -Wall -Wextra -D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH "%SRC%" -o "%OUTPUT%"
     if errorlevel 1 exit /b 1
     echo C++ build complete: %OUTPUT%
     exit /b 0
